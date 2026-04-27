@@ -1,60 +1,82 @@
 # QuantityMeasurementApp
-UC7: Addition with Target Unit Specification
+UC8: Refactoring Unit Enum to Standalone with Conversion Responsibility
 -
 **Description**
 
 
-UC7 extends UC6 by providing flexibility in specifying the unit for the addition result. Instead of defaulting to the unit of the first operand, this use case allows the caller to explicitly specify any supported unit as the target unit for the result. This provides greater flexibility in use cases where the result must be expressed in a specific unit regardless of the operands' units. For example, adding 1 foot and 12 inches with a target unit of yards should yield approximately 0.667 yards.
+UC8 refactors the design from UC1–UC7 to overcome the disadvantage of embedding the LengthUnit enum within the QuantityLength class. This design flaw creates circular dependencies when scaling to multiple measurement categories (length, weight, volume, etc.) and violates the Single Responsibility Principle by not centralizing unit-related conversion logic.
+
+
+UC8 extracts the LengthUnit enum into a standalone, top-level class and assigns it the responsibility of managing conversions to and from the base unit. The QuantityLength class is simplified to delegate conversion logic to the unit itself, improving cohesion, reducing coupling, and establishing a scalable pattern for additional measurement categories.
+
+
+This refactoring maintains all functionality from UC1–UC7 while establishing architectural patterns that support seamless integration of new measurement types in future use cases.
 
 
 
 **Preconditions**
 
 
-Quantity Length class (from UC3/UC4/UC5/UC6) and LengthUnit enum exist with FEET, INCHES, YARDS, CENTIMETERS.
+The QuantityMeasurementApp class is instantiated with the refactored design from UC1–UC7.
 
-The conversionFactor for each LengthUnit is defined relative to a consistent base unit.
+Two numerical values with their respective unit types (feet, inches, yards, centimeters) are provided for comparison, conversion, or arithmetic operations.
 
-Two Quantity Length objects or raw values with their respective units are provided.
+The LengthUnit enum exists as a standalone class with responsibility for unit-specific conversion logic.
 
-A target unit (distinct or same as operand units) is explicitly specified.
+Conversion factors between supported length units are defined as constants within LengthUnit.
 
-All units belong to the same measurement category (length).
+All existing functionality from UC1–UC7 continues to work without modification to client code.
 
 
 **Main Flow**
 
 
-Client calls Quantity Length.add(length1, length2, targetUnit) with an explicit target unit parameter.
+Enum Refactoring:
 
-**The method validates:**
+Move LengthUnit from inside QuantityLength to a standalone top-level class.
 
-Both length1 and length2 are non-null and have valid LengthUnits.
+Add conversion responsibility to LengthUnit: methods to convert from base unit and to base unit.
 
-targetUnit is non-null and a valid LengthUnit.
+Unit Conversion Logic:
 
-All values are finite numbers (Double.isFinite or equivalent).
+Implement convertToBaseUnit(double value) method in LengthUnit to convert a value in this unit to feet (base unit).
 
-Convert both length1 and length2 to a common base unit (feet).
+Implement convertFromBaseUnit(double baseValue) method in LengthUnit to convert a base unit value (feet) to this unit.
 
-Add the converted values.
+QuantityLength Simplification:
 
-Convert the sum from the base unit to the explicitly specified targetUnit.
+Remove internal conversion logic from QuantityLength.
 
-Return a new Quantity Length object representing the result in the target unit.
+Delegate all conversion operations to the unit's conversion methods.
+
+QuantityLength now focuses solely on value comparison and arithmetic logic.
+
+Backward Compatibility:
+
+All existing test cases from UC1–UC7 pass without modification.
+
+Client code continues to work with the same public API.
+
+Scalability Pattern:
+
+The refactored design establishes a pattern for future measurement categories.
+
+New units (WeightUnit, VolumeUnit, TemperatureUnit) can follow the same extraction and responsibility pattern.
 
 
 **Postconditions**
 
 
-A new Quantity Length object is returned with the sum of the two measurements expressed in the explicitly specified target unit.
+LengthUnit is now a standalone enum with full responsibility for unit conversions.
 
-The original Quantity Length objects remain unchanged (immutability principle).
+QuantityLength is simplified and focused on value comparison and arithmetic operations.
 
-The result unit is always the specified target unit, not inferred from operands.
+Circular dependency risk is eliminated by separating enum and quantity classes.
 
-Invalid inputs (null units, unsupported units, NaN, infinite, or mismatched categories) result in a documented exception (e.g., IllegalArgumentException).
+Single Responsibility Principle is upheld: LengthUnit handles conversions, QuantityLength handles comparisons/arithmetic.
 
-Addition is mathematically accurate within floating-point precision limits.
+All equality, conversion, and addition operations from UC1–UC7 work identically.
 
-Addition remains commutative: add(A, B, targetUnit) equals add(B, A, targetUnit).
+The architectural pattern supports straightforward addition of new measurement categories without refactoring existing code.
+
+Code cohesion is improved; unit-specific logic is centralized in the unit class.
