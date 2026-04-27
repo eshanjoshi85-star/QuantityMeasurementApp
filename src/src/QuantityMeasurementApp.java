@@ -1,8 +1,10 @@
-// Version 3.0
+// Version 4.0
 //Eshan Pankaj Joshi
 //UC1: Feet measurement equality
 //UC2: Feet and Inches measurement equality
 //UC3: Generic Quantity Class for DRY Principle
+//UC4: Extended Unit Support
+
 public class QuantityMeasurementApp {
 
     // ---------------- UC1 ----------------
@@ -41,12 +43,13 @@ public class QuantityMeasurementApp {
         }
     }
 
-    // ---------------- UC3 ----------------
+    // ---------------- UC3 + UC4 ----------------
 
-    // Enum for unit conversion
     enum LengthUnit {
         FEET(1.0),
-        INCH(1.0 / 12.0);
+        INCH(1.0 / 12.0),
+        YARDS(3.0), // 1 yard = 3 feet
+        CENTIMETERS(0.0328084); // 1 cm = 0.0328084 feet
 
         private final double toFeetFactor;
 
@@ -59,7 +62,6 @@ public class QuantityMeasurementApp {
         }
     }
 
-    // Generic Quantity class
     static class Quantity {
         private final double value;
         private final LengthUnit unit;
@@ -86,41 +88,50 @@ public class QuantityMeasurementApp {
         }
     }
 
-    // ---------------- MAIN METHOD ----------------
+    // ---------------- MAIN ----------------
     public static void main(String[] args) {
 
         System.out.println("=== Quantity Measurement App ===");
 
-        // -------- UC1: Feet --------
-        System.out.println("\n[UC1] Feet Equality:");
+        // UC1
+        System.out.println("\n[UC1] Feet:");
         Feet f1 = new Feet(1.0);
         Feet f2 = new Feet(1.0);
-        System.out.println("1.0 ft vs 1.0 ft: " + f1.equals(f2));
+        System.out.println("1 ft vs 1 ft: " + f1.equals(f2));
 
-        // -------- UC2: Inches --------
-        System.out.println("\n[UC2] Inches Equality:");
+        // UC2
+        System.out.println("\n[UC2] Inches:");
         Inches i1 = new Inches(1.0);
         Inches i2 = new Inches(1.0);
-        System.out.println("1.0 inch vs 1.0 inch: " + i1.equals(i2));
+        System.out.println("1 inch vs 1 inch: " + i1.equals(i2));
 
-        // -------- UC3: Cross Unit --------
-        System.out.println("\n[UC3] Cross Unit Equality:");
-
+        // UC3
+        System.out.println("\n[UC3] Feet ↔ Inches:");
         Quantity q1 = new Quantity(1.0, LengthUnit.FEET);
         Quantity q2 = new Quantity(12.0, LengthUnit.INCH);
+        System.out.println("1 ft vs 12 inch: " + q1.equals(q2));
 
-        System.out.println("1.0 ft vs 12.0 inch: " + q1.equals(q2));
+        // UC4 - Yards
+        System.out.println("\n[UC4] Yards:");
+        Quantity y1 = new Quantity(1.0, LengthUnit.YARDS);
+        Quantity y2 = new Quantity(3.0, LengthUnit.FEET);
+        System.out.println("1 yard vs 3 ft: " + y1.equals(y2));
 
-        // Same unit (UC3)
-        Quantity q3 = new Quantity(1.0, LengthUnit.INCH);
-        Quantity q4 = new Quantity(1.0, LengthUnit.INCH);
+        Quantity y3 = new Quantity(36.0, LengthUnit.INCH);
+        System.out.println("1 yard vs 36 inch: " + y1.equals(y3));
 
-        System.out.println("1.0 inch vs 1.0 inch: " + q3.equals(q4));
+        // UC4 - Centimeters
+        System.out.println("\n[UC4] Centimeters:");
+        Quantity c1 = new Quantity(1.0, LengthUnit.CENTIMETERS);
+        Quantity c2 = new Quantity(0.393701, LengthUnit.INCH);
+        System.out.println("1 cm vs 0.393701 inch: " + c1.equals(c2));
 
-        // Different values
-        Quantity q5 = new Quantity(2.0, LengthUnit.FEET);
-        System.out.println("1.0 ft vs 2.0 ft: " + q1.equals(q5));
+        // Mixed check
+        System.out.println("\nMixed Comparison:");
+        Quantity mix1 = new Quantity(2.0, LengthUnit.YARDS);
+        Quantity mix2 = new Quantity(6.0, LengthUnit.FEET);
+        System.out.println("2 yard vs 6 ft: " + mix1.equals(mix2));
 
         System.out.println("\nProgram completed.");
     }
-}}
+}
