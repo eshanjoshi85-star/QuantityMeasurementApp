@@ -1,57 +1,81 @@
-//Version 1.0
+// Version 2.0
 //Eshan Pankaj Joshi
 //UC1: Feet measurement equality
-    public class QuantityMeasurementApp {
+//UC2: Feet and Inches measurement equality
+public class QuantityMeasurementApp {
 
-        // Inner immutable class
-        static class Feet {
-            private final double value;
+    // Feet class
+    static class Feet {
+        private final double value;
 
-            // Constructor
-            public Feet(double value) {
-                this.value = value;
-            }
-
-            // Getter (optional, for debugging or extension)
-            public double getValue() {
-                return value;
-            }
-
-            // Override equals method
-            @Override
-            public boolean equals(Object obj) {
-                // Same reference check (reflexive)
-                if (this == obj) {
-                    return true;
-                }
-
-                // Null or type check
-                if (obj == null || getClass() != obj.getClass()) {
-                    return false;
-                }
-
-                // Safe cast
-                Feet other = (Feet) obj;
-
-                // Compare using Double.compare
-                return Double.compare(this.value, other.value) == 0;
-            }
-
-            // Override hashCode (important when equals is overridden)
-            @Override
-            public int hashCode() {
-                return Double.hashCode(value);
-            }
+        public Feet(double value) {
+            this.value = value;
         }
 
-        // Main method to test
-        public static void main(String[] args) {
-            Feet feet1 = new Feet(1.0);
-            Feet feet2 = new Feet(1.0);
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
 
-            boolean result = feet1.equals(feet2);
-
-            System.out.println("Are values equal? " + result);
+            Feet other = (Feet) obj;
+            return Double.compare(this.value, other.value) == 0;
         }
+    }
+
+    // Inches class
+    static class Inches {
+        private final double value;
+
+        public Inches(double value) {
+            this.value = value;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+
+            Inches other = (Inches) obj;
+            return Double.compare(this.value, other.value) == 0;
+        }
+    }
+
+    public static void main(String[] args) {
+
+        // Welcome message
+        System.out.println("=== Quantity Measurement App ===");
+
+        // ---------------- UC1: Feet Equality ----------------
+        System.out.println("\nChecking Feet Equality...");
+
+        Feet f1 = new Feet(1.0);
+        Feet f2 = new Feet(1.0);
+
+        System.out.println("Comparing 1.0 ft and 1.0 ft");
+        System.out.println("Result: " + f1.equals(f2));
+
+        // ---------------- UC2: Inches Equality ----------------
+        System.out.println("\nChecking Inches Equality...");
+
+        Inches i1 = new Inches(1.0);
+        Inches i2 = new Inches(1.0);
+
+        System.out.println("Comparing 1.0 inch and 1.0 inch");
+        System.out.println("Result: " + i1.equals(i2));
+
+        // ---------------- Additional Checks ----------------
+
+        System.out.println("\nChecking different values...");
+        Feet f3 = new Feet(2.0);
+        System.out.println("1.0 ft vs 2.0 ft: " + f1.equals(f3));
+
+        Inches i3 = new Inches(2.0);
+        System.out.println("1.0 inch vs 2.0 inch: " + i1.equals(i3));
+
+        System.out.println("\nChecking null comparison...");
+        System.out.println("Feet vs null: " + f1.equals(null));
+        System.out.println("Inches vs null: " + i1.equals(null));
+
+        System.out.println("\nProgram completed.");
     }
 }
