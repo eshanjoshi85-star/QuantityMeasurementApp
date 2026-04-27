@@ -1,50 +1,46 @@
 # QuantityMeasurementApp
-UC4: Extended Unit Support
+UC5: Unit-to-Unit Conversion (Same Measurement Type)
 -
-
 **Description**
 
 
-UC4 extends UC3 by introducing Yards and Centimeters as additional length units to the QuantityLength class. This use case demonstrates how the generic Quantity class design scales effortlessly to accommodate new units without code duplication. Yards will be added to the LengthUnit enum with the appropriate conversion factor (1 yard = 3 feet) and (1cm = 0.393701in), and all equality comparisons will work seamlessly across feet, inches, yards, and cms.
+UC5 extends UC4 by providing explicit conversion operations between length units (e.g., feet → inches, yards → inches, centimeters → feet). Instead of only comparing equality, the Quantity Length API exposes a conversion method that returns a numeric value converted from a source unit to a target unit using the centralized conversion factors.
 
 
 
 **Preconditions**
 
 
-The QuantityMeasurementApp class is instantiated with the refactored QuantityLength class from UC3.
+Quantity Length class (from UC3/UC4) and LengthUnit enum exist and include FEET, INCHES, YARDS, CENTIMETERS.
 
-Two numerical values, with their respective units (feet, inches, yards), are provided for comparison.
+The conversionFactor for each LengthUnit is defined relative to the chosen base unit (feet or another consistent base).
 
-The conversion factor for yards (1 yard = 3 feet) is defined in the LengthUnit enum.
-
-The conversion factor for yards (1 cm = 0.393701 in) is defined in the LengthUnit enum.
+Input: numeric value, a valid source LengthUnit, and a valid target LengthUnit.
 
 **Main Flow**
 
 
-Users input two numerical values with their respective unit types (feet, inches, yards or cms).
+Client calls Quantity Length.convert(value, sourceUnit, targetUnit) or uses an instance method to request conversion.
 
-The QuantityLength class validates the input values to ensure they are numeric.
+**The method validates:**
 
-The QuantityLength class validates the unit type against supported units (feet, inches, yards, cms).
+value is a finite number (Double.isFinite or equivalent).
+sourceUnit and targetUnit are non-null and members of LengthUnit.
 
-Both values are converted to a common base unit (in or feet) using conversion factors.
+Convert the input value to the common base unit (e.g., feet) using sourceUnit.getConversionFactor().
 
-The converted values are compared for equality.
+Convert from the base unit to the target unit by dividing by targetUnit.getConversionFactor() (or multiplying by appropriate reciprocal).
 
-The result of the comparison is returned to the user.
+Apply optional rounding or precision handling (caller-specified or a default epsilon).
+
+Return the converted numeric value to the caller.
+
 
 **Postconditions**
 
 
+A numeric value representing the original measurement expressed in the target unit is returned.
 
-The equality result (true or false) is returned based on the comparison of the converted values.
+Invalid inputs (null unit, unsupported unit, NaN, infinite) result in a documented exception (e.g., IllegalArgumentException) or a well-defined error response.
 
-All previous functionality from UC1, UC2, and UC3 is preserved and works correctly.
-
-Yard-to-yard, yard-to-feet, and yard-to-inches comparisons are fully supported.
-
-Similarly, all comparisons with respect to centimeters should be supported (cm-to-cm, cm-to-inch, cm-to-feet, etc.)
-
-Code remains free of duplication; adding new units requires only enum modification.
+Conversion preserves mathematical equivalence within floating-point precision limits.
