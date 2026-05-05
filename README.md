@@ -1,138 +1,166 @@
 # QuantityMeasurementApp
-UC11: Volume Measurement Equality, Conversion, and Addition (Litre, Millilitre, Gallon)
+UC12: Subtraction and Division Operations on Quantity Measurements
 -
 **Description**
 
 
-UC11 extends the Quantity Measurement Application to support volume measurements alongside length and weight measurements. This use case introduces a new measurement category—volume—that operates independently from length and weight through the generic Quantity<U> class and IMeasurable interface established in UC10.
+UC12 extends the Quantity Measurement Application by introducing two new arithmetic operations—subtraction and division—to the generic Quantity<U> class. Building on the foundation of equality comparison, unit conversion, and addition from UC1–UC11, this use case enables more comprehensive arithmetic manipulation of measurements.
 
 
-Similar to length and weight measurements, volume measurements in different units (litres, millilitres, gallons) will support equality comparison, unit conversion, and arithmetic addition operations. The application will support three volume units:
+Subtraction allows users to find the difference between two quantities of the same measurement category (e.g., 5 liters - 2 liters = 3 liters, or 10 feet - 6 inches = 9.5 feet when expressed in feet). Division enables users to compute the ratio between two quantities, producing a dimensionless scalar result (e.g., 10 kilograms ÷ 5 kilograms = 2.0, representing how many times one measurement is larger than another).
 
 
-Litre (L): Base unit for volume conversions
+Both operations follow the same design patterns established in UC1–UC11:
 
-Millilitre (mL): 1 L = 1000 mL
 
-Gallon (gal): 1 gallon ≈ 3.78541 L
+Support cross-unit arithmetic (different units within the same category)
 
-UC11 validates that the generic design patterns established in UC10 scale seamlessly to a third measurement category without requiring any modifications to the Quantity<U> class, QuantityMeasurementApp, or existing test infrastructure. This use case demonstrates the true power of the refactored architecture and confirms that adding new measurement categories is straightforward and repeatable.
+Return results in explicitly specified or implicitly determined target units
+
+Maintain immutability of original objects
+
+Provide comprehensive error handling and validation
+
+Adhere to SOLID principles and design consistency
+
+UC12 demonstrates that the extensible Quantity<U> design accommodates diverse operations without fundamental restructuring, reinforcing the scalability and flexibility of the architecture.
 
 
 
 **Preconditions**
 
 
-The refactored Quantity<U extends IMeasurable> class from UC10 is fully operational.
+The generic Quantity<U extends IMeasurable> class from UC10 is fully operational.
 
-The IMeasurable interface is defined with methods for unit conversions.
+The IMeasurable interface defines unit conversion contracts.
 
-Both LengthUnit and WeightUnit enums implement IMeasurable and are fully functional.
+LengthUnit, WeightUnit, and VolumeUnit enums implement IMeasurable.
 
-All functionality from UC1–UC10 is preserved and unaffected by UC11 additions.
+All functionality from UC1–UC11 (equality, conversion, addition) is preserved and unaffected.
 
-A new VolumeUnit enum will be created implementing IMeasurable with LITRE as the base unit.
+New subtraction and division methods will be added to the Quantity<U> class.
 
-Conversion factors for all volume units are defined relative to litres (base unit).
+Corresponding demonstration methods will be added to QuantityMeasurementApp.
 
-Volume measurements are treated as a separate, non-interoperable category from length and weight.
+Subtraction operations return Quantity<U> objects (same type as operands).
 
-No modifications to existing Quantity<U>, IMeasurable, or QuantityMeasurementApp are required.
+Division operations return Quantity<U> objects (same type as operands).
+
+All operations support explicit target unit specification for result expression.
+
+Cross-category arithmetic (e.g., subtracting weight from length) is prevented through type safety.
 
 
 **Main Flow**
 
 
-Create VolumeUnit Enum Implementing IMeasurable
+Subtraction Operations
 
-Define an enum with volume units (LITRE, MILLILITRE, GALLON).
 
-Assign conversion factors relative to the base unit (litre):
+User Initiates Subtraction
 
-LITRE: 1.0 (base unit)
+Client calls Quantity<U>.subtract(Quantity<U> other) or Quantity<U>.subtract(Quantity<U> other, U targetUnit).
 
-MILLILITRE: 0.001 (1 mL = 0.001 L)
+Method accepts another quantity and optionally a target unit.
 
-GALLON: 3.78541 (1 gallon ≈ 3.78541 L)
+Input Validation
 
-Implement all IMeasurable interface methods:
+Verify that the other is non-null and has a valid unit.
 
-getConversionFactor() - returns the conversion factor
+Verify that both quantities belong to the same measurement category (type check via unit.getClass()).
 
-convertToBaseUnit(double value) - converts value to litres
+Verify that all numeric values are finite (not NaN or infinite).
 
-convertFromBaseUnit(double baseValue) - converts from litres to this unit
+Conversion to Base Unit
 
-getUnitName() - returns readable unit name
+Convert both this and other to the common base unit using IMeasurable.convertToBaseUnit().
 
-Equality Comparison
+Subtract the converted values: baseResult = this.baseValue - other.baseValue.
 
-User inputs two numerical values with their respective volume unit types.
+Convert Result to Target Unit
 
-Quantity<VolumeUnit> class (inherited from generic Quantity<U>) validates input values.
+If no target unit is specified, use the unit of the first operand (implicit).
 
-Both values are converted to the common base unit (litre) using VolumeUnit conversion methods.
+Convert the base result to the target unit using IMeasurable.convertFromBaseUnit().
 
-The converted values are compared for equality using the generic equals() method.
+Round the result to two decimal places for consistency.
 
-The result of the comparison (true or false) is returned.
+Return New Quantity
 
-Unit Conversion
+Create and return a new Quantity<U> object with the subtracted value and target unit.
 
-User inputs a numerical value, source unit, and target unit (all volume units).
-
-Quantity<VolumeUnit>.convertTo(targetUnit) converts the measurement to the target unit.
-
-The method normalizes through the base unit (litre) and applies appropriate conversion factors.
-
-A new Quantity<VolumeUnit> object is returned with the converted value and target unit.
-
-Addition Operations
-
-User inputs two Quantity<VolumeUnit> objects and optionally a target unit.
-
-Both measurements are converted to the base unit (litre) using the generic add() method.
-
-The converted values are summed.
-
-The result is converted to the target unit (either first operand's unit or explicitly specified unit).
-
-A new Quantity<VolumeUnit> object representing the sum is returned.
+Original objects remain unchanged (immutability principle).
 
 Cross-Category Type Safety
 
-Attempting to compare volume with length or weight returns false (different categories).
+Positive result indicates the first operand is larger.
 
-Compiler prevents mixing Quantity<VolumeUnit> with Quantity<LengthUnit> or Quantity<WeightUnit>.
+Negative result indicates the second operand is larger.
 
-Runtime type checking in equals() method ensures category isolation.
+Zero result indicates quantities are equivalent.
 
-Integration with Existing System
+Division Operations
 
-VolumeUnit enum is used seamlessly with the existing generic Quantity<U> class.
 
-No modifications to QuantityMeasurementApp needed; existing generic methods handle volume quantities.
+User Initiates Division
 
-All existing demonstration and test methods work with volume units automatically.
+Client calls Quantity<U>.divide(Quantity<U> other).
+
+Method accepts another quantity and returns a dimensionless scalar.
+
+Input Validation
+
+Verify that other is non-null and has a valid unit.
+
+Verify that both quantities belong to the same measurement category.
+
+Verify that all numeric values are finite.
+
+Verify that the divisor (other) is not zero (prevent division by zero).
+
+Conversion to Base Unit
+
+Convert both this and other to the common base unit.
+
+Divide the base values: result = this.baseValue / other.baseValue.
+
+Return Dimensionless Result
+
+Return the scalar result as a primitive double.
+
+Result is dimensionless (no unit), representing a pure ratio.
+
+Result Interpretation
+
+Result > 1.0 indicates first operand is larger.
+
+Result < 1.0 indicates second operand is larger.
+
+Result = 1.0 indicates quantities are equivalent.
+
 
 
 **Postconditions**
 
 
-Volume measurements of the same unit and value are considered equal.
+Subtraction of two quantities produces a new Quantity<U> object with the correct difference.
 
-Volume measurements of different units but equivalent values are considered equal (e.g., 1 L = 1000 mL = ~0.264172 gallons).
+Result unit for subtraction is either the first operand's unit (implicit) or explicitly specified target unit.
 
-Unit conversions between volume units produce mathematically accurate results within floating-point precision.
+Original quantities remain unchanged; subtraction follows immutability principle.
 
-Addition of two volume measurements produces a new Quantity<VolumeUnit> object without modifying originals (immutability).
+Cross-category subtraction (e.g., feet - kilograms) is prevented by type system.
 
-All previous functionality from UC1–UC10 for length and weight measurements is preserved and works correctly.
+Division of two quantities returns a dimensionless double scalar value.
 
-Volume, length, and weight measurements are treated as separate, non-interoperable categories.
+Division by zero results in Double.POSITIVE_INFINITY or throws an exception (design choice).
 
-No modifications to Quantity<U>, IMeasurable, QuantityMeasurementApp, or existing test infrastructure are required.
+All arithmetic operations (addition, subtraction, division) coexist seamlessly.
 
-The architectural pattern is validated as truly scalable; new categories integrate effortlessly.
+Demonstration methods in QuantityMeasurementApp showcase all operations.
 
-Adding additional measurement categories (temperature, time, etc.) follows the identical pattern.
+All previous functionality from UC1–UC11 is preserved.
+
+Subtraction and division work across all measurement categories (length, weight, volume).
+
+Mathematical properties are respected: subtraction is non-commutative, division is non-commutative.
