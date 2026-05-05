@@ -1,165 +1,249 @@
 # QuantityMeasurementApp
-UC12: Subtraction and Division Operations on Quantity Measurements
+
+UC13: Centralized Arithmetic Logic to Enforce DRY in Quantity Operations
 -
 **Description**
 
 
-UC12 extends the Quantity Measurement Application by introducing two new arithmetic operations—subtraction and division—to the generic Quantity<U> class. Building on the foundation of equality comparison, unit conversion, and addition from UC1–UC11, this use case enables more comprehensive arithmetic manipulation of measurements.
+UC13 refactors the arithmetic operations (addition, subtraction, division) implemented in UC12 to eliminate code duplication and enforce the DRY (Don't Repeat Yourself) principle. Instead of repeating unit conversion, base-unit normalization, and validation logic across multiple arithmetic methods, this use case introduces a centralized private helper method that encapsulates all common arithmetic logic.
 
 
-Subtraction allows users to find the difference between two quantities of the same measurement category (e.g., 5 liters - 2 liters = 3 liters, or 10 feet - 6 inches = 9.5 feet when expressed in feet). Division enables users to compute the ratio between two quantities, producing a dimensionless scalar result (e.g., 10 kilograms ÷ 5 kilograms = 2.0, representing how many times one measurement is larger than another).
+By consolidating the repetitive code into a single, reusable helper method, UC13 improves maintainability, reduces bug risk, and establishes a scalable pattern for adding future arithmetic operations (multiplication, modulo, etc.) without duplicating logic. The public API remains unchanged; all behaviors from UC12 are preserved while the internal implementation is optimized for clarity and consistency.
 
 
-Both operations follow the same design patterns established in UC1–UC11:
+
+**Disadvantages of UC12 Implementation**
 
 
-Support cross-unit arithmetic (different units within the same category)
+UC12's direct implementation of arithmetic operations exhibits several architectural flaws:
 
-Return results in explicitly specified or implicitly determined target units
 
-Maintain immutability of original objects
+Code Duplication Across Arithmetic Methods
 
-Provide comprehensive error handling and validation
+add(), subtract(), and divide() each contain nearly identical code:
 
-Adhere to SOLID principles and design consistency
+Null checks for operand and unit
 
-UC12 demonstrates that the extensible Quantity<U> design accommodates diverse operations without fundamental restructuring, reinforcing the scalability and flexibility of the architecture.
+Category type compatibility verification via unit.getClass()
 
+Finiteness validation for numeric values
+
+Base-unit conversion via IMeasurable.convertToBaseUnit()
+
+Explicit target unit handling
+
+Explicit target unit handling
+
+Any of these checks present in all three methods with minimal variation.
+
+Future arithmetic operations (multiplication, modulo, etc.) would duplicate this pattern further.
+
+DRY Principle Violation
+
+Common validation logic is copied verbatim across methods.
+
+Error messages and validation checks are not centralized.
+
+Changes to validation rules require updates in multiple locations.
+
+Inconsistencies between methods become possible (e.g., one method uses different null-check behavior).
+
+Increased Maintenance Burden
+
+Bug fixes or improvements to conversion logic must be applied in three+ places.
+
+Risk of partial updates (fixing one method while missing others).
+
+Refactoring becomes complex as changes ripple across multiple methods.
+
+New developers struggle to understand why logic is repeated.
+
+Reduced Code Readability
+
+Length of each arithmetic method obscures the core operation logic.
+
+Readers must parse validation/conversion boilerplate before understanding the actual arithmetic.
+
+Intent of the method is buried in repetitive code.
+
+**Scalability Issues**
+
+Adding multiplication, modulo, or other operations compounds duplication.
+
+Validation and conversion logic would be replicated 5+, 6+, 7+ times.
+
+Codebase grows unnecessarily; complexity increases without adding functionality.
+
+**Inconsistent Error Handling**
+
+Each method might handle errors slightly differently.
+
+Some might throw exceptions; others return special values.
+
+No centralized place to adjust error-handling strategy.
+
+**Testing Complexity**
+
+Validation scenarios must be tested separately for each operation.
+
+Tests for add(), subtract(), and divide() contain nearly identical test cases.
+
+Bug fixes or validation changes require updating tests in multiple locations.
 
 
 **Preconditions**
 
 
-The generic Quantity<U extends IMeasurable> class from UC10 is fully operational.
+All arithmetic operations from UC12 (add, subtract, divide) are fully functional and tested.
 
-The IMeasurable interface defines unit conversion contracts.
+All unit enums (LengthUnit, WeightUnit, VolumeUnit, etc.) implement IMeasurable.
 
-LengthUnit, WeightUnit, and VolumeUnit enums implement IMeasurable.
+Behavior of arithmetic operations must remain unchanged after refactoring.
 
-All functionality from UC1–UC11 (equality, conversion, addition) is preserved and unaffected.
+Existing test cases from UC12 will pass without modification.
 
-New subtraction and division methods will be added to the Quantity<U> class.
+The refactoring will be internal; public API signatures remain identical.
 
-Corresponding demonstration methods will be added to QuantityMeasurementApp.
+A centralized helper method will extract common logic.
 
-Subtraction operations return Quantity<U> objects (same type as operands).
+Error handling and validation remain consistent across all operations.
 
-Division operations return Quantity<U> objects (same type as operands).
-
-All operations support explicit target unit specification for result expression.
-
-Cross-category arithmetic (e.g., subtracting weight from length) is prevented through type safety.
+Refactor will not change public method signatures or results.
 
 
 **Main Flow**
 
 
-Subtraction Operations
+**Step 1: Analyze Common Logic**
 
 
-User Initiates Subtraction
+Identify validation steps shared across add, subtract, divide:
 
-Client calls Quantity<U>.subtract(Quantity<U> other) or Quantity<U>.subtract(Quantity<U> other, U targetUnit).
+Null check on operand
 
-Method accepts another quantity and optionally a target unit.
+Category type verification
 
-Input Validation
+Finiteness validation for both operands
 
-Verify that the other is non-null and has a valid unit.
+Optional target unit validation
 
-Verify that both quantities belong to the same measurement category (type check via unit.getClass()).
+Identify conversion logic shared across operations:
 
-Verify that all numeric values are finite (not NaN or infinite).
+Convert this to base unit
 
-Conversion to Base Unit
+Convert operand to base unit
 
-Convert both this and other to the common base unit using IMeasurable.convertToBaseUnit().
+Perform arithmetic operation on base values
 
-Subtract the converted values: baseResult = this.baseValue - other.baseValue.
+(For add/subtract) Convert result back to target unit
 
-Convert Result to Target Unit
+**Step 2: Design Arithmetic Operation Enum**
 
-If no target unit is specified, use the unit of the first operand (implicit).
+Create a private enum for ArithmeticOperation
 
-Convert the base result to the target unit using IMeasurable.convertFromBaseUnit().
+ADD: Represents addition
 
-Round the result to two decimal places for consistency.
+SUBTRACT: Represents subtraction
 
-Return New Quantity
+DIVIDE: Represents division
 
-Create and return a new Quantity<U> object with the subtracted value and target unit.
+MULTIPLY: (Optional for future use)
 
-Original objects remain unchanged (immutability principle).
+**Step 3: Create Centralized Private Helper Method**
 
-Cross-Category Type Safety
+**Logic flow:**
 
-Positive result indicates the first operand is larger.
+Validate inputs (non-null, same category, finite values)
 
-Negative result indicates the second operand is larger.
+Convert both operands to base unit
 
-Zero result indicates quantities are equivalent.
+Execute arithmetic based on ArithmeticOperation type
 
-Division Operations
+Return base-unit result
 
+**Step 4: Refactor Public Arithmetic Methods**
 
-User Initiates Division
+add(Quantity<U> other):
 
-Client calls Quantity<U>.divide(Quantity<U> other).
+Calls helper with implicit target unit (first operand's unit)
 
-Method accepts another quantity and returns a dimensionless scalar.
+Converts result to target unit
 
-Input Validation
+Returns new Quantity<U>
 
-Verify that other is non-null and has a valid unit.
+add(Quantity<U> other, U targetUnit):
 
-Verify that both quantities belong to the same measurement category.
+Calls helper with explicit target unit
 
-Verify that all numeric values are finite.
+Converts result to target unit
 
-Verify that the divisor (other) is not zero (prevent division by zero).
+Returns new Quantity<U>
 
-Conversion to Base Unit
+subtract(Quantity<U> other):
 
-Convert both this and other to the common base unit.
+Calls helper with implicit target unit
 
-Divide the base values: result = this.baseValue / other.baseValue.
+Converts result to target unit
 
-Return Dimensionless Result
+Returns new Quantity<U>
 
-Return the scalar result as a primitive double.
+subtract(Quantity<U> other, U targetUnit):
 
-Result is dimensionless (no unit), representing a pure ratio.
+Calls helper with explicit target unit
 
-Result Interpretation
+Converts result to target unit
 
-Result > 1.0 indicates first operand is larger.
+Returns new Quantity<U>
 
-Result < 1.0 indicates second operand is larger.
+divide(Quantity<U> other):
 
-Result = 1.0 indicates quantities are equivalent.
+Calls helper with irrelevant target unit (not used for division)
 
+Returns dimensionless scalar without further conversion
+
+**Step 5: Ensure Backward Compatibility**
+
+All public methods retain original signatures.
+
+All results match UC12 behavior exactly.
+
+Error handling and exceptions remain consistent.
+
+Existing test cases pass without modification.
+
+**Step 6: Validate Consistency**
+
+Verify that validation errors are identical across operations.
+
+Confirm that cross-category checks work uniformly.
+
+Test that division-by-zero handling is correct.
+
+Validate rounding behavior for add/subtract.
 
 
 **Postconditions**
 
 
-Subtraction of two quantities produces a new Quantity<U> object with the correct difference.
+All arithmetic operations (add, subtract, divide) delegate to a centralized helper.
 
-Result unit for subtraction is either the first operand's unit (implicit) or explicitly specified target unit.
+Validation and conversion logic is implemented once, in the helper.
 
-Original quantities remain unchanged; subtraction follows immutability principle.
+Code duplication across arithmetic methods is eliminated.
 
-Cross-category subtraction (e.g., feet - kilograms) is prevented by type system.
+Public method signatures and behavior remain unchanged.
 
-Division of two quantities returns a dimensionless double scalar value.
+All UC12 test cases pass without modification.
 
-Division by zero results in Double.POSITIVE_INFINITY or throws an exception (design choice).
+Error handling is consistent across all operations.
 
-All arithmetic operations (addition, subtraction, division) coexist seamlessly.
+Future arithmetic operations (multiplication, modulo, etc.) can reuse the same helper pattern.
 
-Demonstration methods in QuantityMeasurementApp showcase all operations.
+Maintainability is significantly improved; changes to validation or conversion affect all operations uniformly.
 
-All previous functionality from UC1–UC11 is preserved.
+Codebase complexity is reduced; individual method length is shortened.
+
+DRY principle is enforced; no logic duplication exists.
 
 Subtraction and division work across all measurement categories (length, weight, volume).
 
