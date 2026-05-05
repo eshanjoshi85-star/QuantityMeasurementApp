@@ -1,82 +1,92 @@
 # QuantityMeasurementApp
-UC8: Refactoring Unit Enum to Standalone with Conversion Responsibility
+UC9: Weight Measurement Equality, Conversion, and Addition (Kilogram, Gram, Pound)
 -
 **Description**
 
 
-UC8 refactors the design from UC1–UC7 to overcome the disadvantage of embedding the LengthUnit enum within the QuantityLength class. This design flaw creates circular dependencies when scaling to multiple measurement categories (length, weight, volume, etc.) and violates the Single Responsibility Principle by not centralizing unit-related conversion logic.
+UC9 extends the Quantity Measurement Application to support weight measurements alongside length measurements. This use case introduces a new measurement category—weight—that operates independently from length. Similar to how length measurements (feet, inches, yards, centimeters) are compared for equality, converted between units, and added together, weight measurements in different units (kilograms, grams, pounds) will support the same operations.
 
 
-UC8 extracts the LengthUnit enum into a standalone, top-level class and assigns it the responsibility of managing conversions to and from the base unit. The QuantityLength class is simplified to delegate conversion logic to the unit itself, improving cohesion, reducing coupling, and establishing a scalable pattern for additional measurement categories.
+The application will support three weight units:
 
 
-This refactoring maintains all functionality from UC1–UC7 while establishing architectural patterns that support seamless integration of new measurement types in future use cases.
+Kilogram (kg): Base unit for weight conversions
+
+Gram (g): 1 kg = 1000 g
+
+Pound (lb): 1 lb ≈ 0.453592 kg
+
+UC9 demonstrates that the generic design patterns established in UC1–UC8 scale seamlessly to multiple measurement categories. The WeightUnit enum and QuantityWeight class mirror the LengthUnit and QuantityLength design, reinforcing consistency and maintainability across the application.
 
 
 
 **Preconditions**
 
 
-The QuantityMeasurementApp class is instantiated with the refactored design from UC1–UC7.
+The QuantityMeasurementApp class is instantiated.
 
-Two numerical values with their respective unit types (feet, inches, yards, centimeters) are provided for comparison, conversion, or arithmetic operations.
+Two or more numerical values with their respective weight unit types (kilogram, gram, pound) are provided for comparison, conversion, or addition.
 
-The LengthUnit enum exists as a standalone class with responsibility for unit-specific conversion logic.
+The conversion factors between supported weight units are defined as constants relative to kilogram (base unit).
 
-Conversion factors between supported length units are defined as constants within LengthUnit.
+The WeightUnit enum exists as a standalone class with conversion responsibility (mirroring UC8 refactoring for LengthUnit).
 
-All existing functionality from UC1–UC7 continues to work without modification to client code.
+Length functionality from UC1–UC8 remains fully operational and unaffected.
+
+Weight and length measurements are treated as separate, incomparable categories.
 
 
 **Main Flow**
 
 
-Enum Refactoring:
+Equality Comparison:
 
-Move LengthUnit from inside QuantityLength to a standalone top-level class.
+User inputs two numerical values with their respective weight unit types.
 
-Add conversion responsibility to LengthUnit: methods to convert from base unit and to base unit.
+QuantityWeight class validates the input values to ensure they are numeric and units are valid.
 
-Unit Conversion Logic:
+Both values are converted to the common base unit (kilogram) using WeightUnit conversion methods.
 
-Implement convertToBaseUnit(double value) method in LengthUnit to convert a value in this unit to feet (base unit).
+The converted values are compared for equality using the overridden equals() method.
 
-Implement convertFromBaseUnit(double baseValue) method in LengthUnit to convert a base unit value (feet) to this unit.
+The result of the comparison (true or false) is returned.
 
-QuantityLength Simplification:
+Unit Conversion:
 
-Remove internal conversion logic from QuantityLength.
+User inputs a numerical value, source unit, and target unit.
 
-Delegate all conversion operations to the unit's conversion methods.
+QuantityWeight.convertTo(targetUnit) converts the measurement to the target unit.
 
-QuantityLength now focuses solely on value comparison and arithmetic logic.
+The method normalizes through the base unit (kilogram) and applies appropriate conversion factors.
 
-Backward Compatibility:
+A new QuantityWeight object is returned with the converted value and target unit.
 
-All existing test cases from UC1–UC7 pass without modification.
+Addition Operations:
 
-Client code continues to work with the same public API.
+User inputs two QuantityWeight objects and optionally a target unit.
 
-Scalability Pattern:
+Both measurements are converted to the base unit (kilogram).
 
-The refactored design establishes a pattern for future measurement categories.
+The converted values are summed.
 
-New units (WeightUnit, VolumeUnit, TemperatureUnit) can follow the same extraction and responsibility pattern.
+The result is converted to the target unit (either first operand's unit or explicitly specified unit).
+
+A new QuantityWeight object representing the sum is returned.
 
 
 **Postconditions**
 
 
-LengthUnit is now a standalone enum with full responsibility for unit conversions.
+Weight measurements of the same unit and value are considered equal.
 
-QuantityLength is simplified and focused on value comparison and arithmetic operations.
+Weight measurements of different units but equivalent values are considered equal (e.g., 1 kg = 1000 g = 2.20462 lb).
 
-Circular dependency risk is eliminated by separating enum and quantity classes.
+Unit conversions between weight units produce mathematically accurate results within floating-point precision.
 
-Single Responsibility Principle is upheld: LengthUnit handles conversions, QuantityLength handles comparisons/arithmetic.
+Addition of two weight measurements produces a new QuantityWeight object without modifying originals (immutability).
 
-All equality, conversion, and addition operations from UC1–UC7 work identically.
+All previous functionality from UC1–UC8 for length measurements is preserved and works correctly.
 
-The architectural pattern supports straightforward addition of new measurement categories without refactoring existing code.
+Length and weight measurements are treated as separate, incomparable categories (1 foot ≠ 1 kilogram).
 
-Code cohesion is improved; unit-specific logic is centralized in the unit class.
+The architectural pattern established supports straightforward addition of new measurement categories (temperature, volume, etc.).
