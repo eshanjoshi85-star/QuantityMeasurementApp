@@ -1,92 +1,248 @@
 # QuantityMeasurementApp
-UC9: Weight Measurement Equality, Conversion, and Addition (Kilogram, Gram, Pound)
+UC10: Generic Quantity Class with Unit Interface for Multi-Category Support
 -
 **Description**
 
 
-UC9 extends the Quantity Measurement Application to support weight measurements alongside length measurements. This use case introduces a new measurement category—weight—that operates independently from length. Similar to how length measurements (feet, inches, yards, centimeters) are compared for equality, converted between units, and added together, weight measurements in different units (kilograms, grams, pounds) will support the same operations.
+UC10 addresses the architectural and design disadvantages introduced by UC9 by refactoring the design into a single, generic Quantity<U> class that works with any measurement category through a common IMeasurable interface. This use case eliminates code duplication across parallel QuantityLength and QuantityWeight classes, consolidates unit enum patterns, and simplifies the QuantityMeasurementApp class to adhere to the Single Responsibility Principle.
 
 
-The application will support three weight units:
+The refactoring maintains all functionality from UC1–UC9 while establishing a scalable, maintainable architecture that supports seamless addition of new measurement categories (volume, temperature, etc.) without code duplication.
 
 
-Kilogram (kg): Base unit for weight conversions
-
-Gram (g): 1 kg = 1000 g
-
-Pound (lb): 1 lb ≈ 0.453592 kg
-
-UC9 demonstrates that the generic design patterns established in UC1–UC8 scale seamlessly to multiple measurement categories. The WeightUnit enum and QuantityWeight class mirror the LengthUnit and QuantityLength design, reinforcing consistency and maintainability across the application.
+Disadvantages of UC9 Implementation
 
 
+UC9 introduced several architectural flaws that UC10 addresses:
+
+
+Duplicate Unit Enum Structures
+
+LengthUnit and WeightUnit enums contain nearly identical code:
+
+Same method signatures: getConversionFactor(), convertToBaseUnit(), convertFromBaseUnit()
+
+Same immutability guarantees
+
+Redundant implementation patterns
+
+Violates DRY principle; future units (VolumeUnit, TemperatureUnit) would amplify duplication.
+
+Duplicate Quantity Class Logic
+
+QuantityLength and QuantityWeight classes are nearly identical:
+
+Same constructor validation
+
+Identical equals() method structure (with different unit types)
+
+Duplicate convertTo() logic
+
+Replicated add() method implementations
+
+Bug fixes or improvements must be applied separately to each class, increasing error risk.
+
+Each new category requires writing identical boilerplate code.
+
+QuantityMeasurementApp Single Responsibility Principle Violation
+
+Class handles multiple, unrelated domains (length, weight) with separate methods:
+
+demonstrateLengthEquality(), demonstrateWeightEquality()
+
+demonstrateLengthConversion(), demonstrateWeightConversion()
+
+demonstrateLengthAddition(), demonstrateWeightAddition()
+
+Method duplication reflects identical underlying logic applied to different types.
+
+Class becomes increasingly complex and harder to maintain as categories grow.
+
+Mixed concerns: demonstration logic intertwined with category-specific handling.
+
+Exponential Code Growth
+
+Adding each new unit type requires:
+
+New Unit enum (e.g., VolumeUnit)
+
+New Quantity class (e.g., QuantityVolume)
+
+New demonstration methods in QuantityMeasurementApp (minimum 3 methods)
+
+New comprehensive test suite
+
+Total codebase grows exponentially; maintenance burden escalates rapidly.
+
+Pattern becomes unsustainable beyond 3-4 categories.
+
+Inconsistency Risk
+
+Refactoring comparison logic in QuantityLength without updating QuantityWeight creates subtle bugs.
+
+Different categories may inadvertently have different precision, rounding, or validation logic.
+
+No single source of truth for core operations.
+
+Limited API Flexibility
+
+Methods accepting Quantity<?> or generic comparisons are difficult to implement.
+
+Factory methods or utility functions cannot work uniformly across categories.
+
+The system becomes increasingly fragmented.
 
 **Preconditions**
 
 
-The QuantityMeasurementApp class is instantiated.
+All functionality from UC1–UC9 is fully operational and tested.
 
-Two or more numerical values with their respective weight unit types (kilogram, gram, pound) are provided for comparison, conversion, or addition.
+An IMeasurable interface is defined to standardize unit behavior across all categories.
 
-The conversion factors between supported weight units are defined as constants relative to kilogram (base unit).
+Both LengthUnit and WeightUnit enums are refactored to implement IMeasurable.
 
-The WeightUnit enum exists as a standalone class with conversion responsibility (mirroring UC8 refactoring for LengthUnit).
+A generic Quantity<U extends IMeasurable> class is created to replace category-specific Quantity classes.
 
-Length functionality from UC1–UC8 remains fully operational and unaffected.
+Type safety is maintained through generics; compile-time checking prevents category mismatches.
 
-Weight and length measurements are treated as separate, incomparable categories.
+All existing test cases from UC1–UC9 continue to pass without modification.
+
+The refactored design serves as a template for future measurement categories.
 
 
 **Main Flow**
 
 
-Equality Comparison:
+Define IMeasurable Interface
 
-User inputs two numerical values with their respective weight unit types.
+Create interface with methods required for unit conversions:
 
-QuantityWeight class validates the input values to ensure they are numeric and units are valid.
+double getConversionFactor() - returns conversion factor relative to base unit
 
-Both values are converted to the common base unit (kilogram) using WeightUnit conversion methods.
+double convertToBaseUnit(double value) - converts value to base unit
 
-The converted values are compared for equality using the overridden equals() method.
+double convertFromBaseUnit(double baseValue) - converts from base unit to this unit
 
-The result of the comparison (true or false) is returned.
+String getUnitName() - returns readable unit name
 
-Unit Conversion:
+Refactor LengthUnit Enum:
 
-User inputs a numerical value, source unit, and target unit.
+Implement IMeasurable interface
 
-QuantityWeight.convertTo(targetUnit) converts the measurement to the target unit.
+Keep all existing constants (FEET, INCHES, YARDS, CENTIMETERS) and conversion factors
 
-The method normalizes through the base unit (kilogram) and applies appropriate conversion factors.
+Implement all interface methods with existing logic
 
-A new QuantityWeight object is returned with the converted value and target unit.
+No external API changes; fully backward compatible.
 
-Addition Operations:
+Refactor WeightUnit Enum:
 
-User inputs two QuantityWeight objects and optionally a target unit.
+Implement IMeasurable interface
 
-Both measurements are converted to the base unit (kilogram).
+Ensure same structure and method implementations as refactored LengthUnit
 
-The converted values are summed.
+Consistency across enums improves maintainability
 
-The result is converted to the target unit (either first operand's unit or explicitly specified unit).
+Create Generic Quantity Class:
 
-A new QuantityWeight object representing the sum is returned.
+Replaces both QuantityLength and QuantityWeight
+
+Holds private final fields: double value and U unit
+
+Constructor validates that unit is non-null and value is finite
+
+Implements equals() method:
+
+Checks object identity and null
+
+Verifies unit types match (prevents cross-category comparison)
+
+Converts both to base unit and compares using Double.compare()
+
+Implements convertTo(U targetUnit) method:
+
+Delegates to unit's conversion methods
+
+Returns new Quantity<U> instance (immutability)
+
+Rounds result to two decimal places
+
+Implements add() methods (overloaded):
+
+Add (Quantity<U> other) - result in first operand's unit
+
+Add (Quantity<U> other, U targetUnit) - result in specified unit
+
+Overrides hashCode() for collection support
+
+Overrides toString() for readable output
+
+Simplify QuantityMeasurementApp
+
+Remove all category-specific demonstration methods
+
+Create single generic demonstration methods accepting Quantity<?>
+
+Consolidate comparison, conversion, and addition demonstration logic
+
+Reduce class to orchestration and testing responsibilities only
+
+Eliminate method duplication
+
+Cross-Category Type Safety
+
+equals() method checks this.unit.getClass() != that.unit.getClass()
+
+Prevents invalid comparisons (e.g., 1 foot ≠ 1 kilogram)
+
+Compiler enforces type constraints through generics
+
+Runtime checks provide additional safety layer
+
+Backward Compatibility
+
+Type aliases or factory methods can maintain familiar APIs if needed
+
+Existing test cases pass without modification
+
+Generic implementation is transparent to callers
+
+Scalability Pattern Establishment
+
+Document process for adding new categories:
+
+Create new enum implementing IMeasurable
+
+Reuse Quantity<U> class with new enum
+
+No new Quantity classes or demonstration methods needed
+
+Pattern proven with length and weight categories
 
 
 **Postconditions**
 
 
-Weight measurements of the same unit and value are considered equal.
+A single, type-safe Quantity<U extends IMeasurable> class replaces multiple category-specific Quantity classes.
 
-Weight measurements of different units but equivalent values are considered equal (e.g., 1 kg = 1000 g = 2.20462 lb).
+All unit enums implement IMeasurable interface, eliminating structural duplication.
 
-Unit conversions between weight units produce mathematically accurate results within floating-point precision.
+QuantityMeasurementApp is simplified with significantly fewer methods and reduced complexity.
 
-Addition of two weight measurements produces a new QuantityWeight object without modifying originals (immutability).
+DRY principle is upheld; logic is implemented once and reused across all categories.
 
-All previous functionality from UC1–UC8 for length measurements is preserved and works correctly.
+Single Responsibility Principle is restored; each class has a clear, singular purpose.
 
-Length and weight measurements are treated as separate, incomparable categories (1 foot ≠ 1 kilogram).
+All functionality from UC1–UC9 is preserved; behavior is identical.
 
-The architectural pattern established supports straightforward addition of new measurement categories (temperature, volume, etc.).
+Adding new measurement categories requires only:
+
+New enum implementing IMeasurable interface
+
+No changes to Quantity<U>, test infrastructure, or QuantityMeasurementApp
+
+Maintenance burden is significantly reduced; changes are localized.
+
+Code complexity scales linearly rather than exponentially.
+
+Type safety is enhanced through generics and bounded type parameters.
