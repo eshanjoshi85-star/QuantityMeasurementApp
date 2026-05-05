@@ -1,248 +1,138 @@
 # QuantityMeasurementApp
-UC10: Generic Quantity Class with Unit Interface for Multi-Category Support
+UC11: Volume Measurement Equality, Conversion, and Addition (Litre, Millilitre, Gallon)
 -
 **Description**
 
 
-UC10 addresses the architectural and design disadvantages introduced by UC9 by refactoring the design into a single, generic Quantity<U> class that works with any measurement category through a common IMeasurable interface. This use case eliminates code duplication across parallel QuantityLength and QuantityWeight classes, consolidates unit enum patterns, and simplifies the QuantityMeasurementApp class to adhere to the Single Responsibility Principle.
+UC11 extends the Quantity Measurement Application to support volume measurements alongside length and weight measurements. This use case introduces a new measurement category—volume—that operates independently from length and weight through the generic Quantity<U> class and IMeasurable interface established in UC10.
 
 
-The refactoring maintains all functionality from UC1–UC9 while establishing a scalable, maintainable architecture that supports seamless addition of new measurement categories (volume, temperature, etc.) without code duplication.
+Similar to length and weight measurements, volume measurements in different units (litres, millilitres, gallons) will support equality comparison, unit conversion, and arithmetic addition operations. The application will support three volume units:
 
 
-Disadvantages of UC9 Implementation
+Litre (L): Base unit for volume conversions
+
+Millilitre (mL): 1 L = 1000 mL
+
+Gallon (gal): 1 gallon ≈ 3.78541 L
+
+UC11 validates that the generic design patterns established in UC10 scale seamlessly to a third measurement category without requiring any modifications to the Quantity<U> class, QuantityMeasurementApp, or existing test infrastructure. This use case demonstrates the true power of the refactored architecture and confirms that adding new measurement categories is straightforward and repeatable.
 
 
-UC9 introduced several architectural flaws that UC10 addresses:
-
-
-Duplicate Unit Enum Structures
-
-LengthUnit and WeightUnit enums contain nearly identical code:
-
-Same method signatures: getConversionFactor(), convertToBaseUnit(), convertFromBaseUnit()
-
-Same immutability guarantees
-
-Redundant implementation patterns
-
-Violates DRY principle; future units (VolumeUnit, TemperatureUnit) would amplify duplication.
-
-Duplicate Quantity Class Logic
-
-QuantityLength and QuantityWeight classes are nearly identical:
-
-Same constructor validation
-
-Identical equals() method structure (with different unit types)
-
-Duplicate convertTo() logic
-
-Replicated add() method implementations
-
-Bug fixes or improvements must be applied separately to each class, increasing error risk.
-
-Each new category requires writing identical boilerplate code.
-
-QuantityMeasurementApp Single Responsibility Principle Violation
-
-Class handles multiple, unrelated domains (length, weight) with separate methods:
-
-demonstrateLengthEquality(), demonstrateWeightEquality()
-
-demonstrateLengthConversion(), demonstrateWeightConversion()
-
-demonstrateLengthAddition(), demonstrateWeightAddition()
-
-Method duplication reflects identical underlying logic applied to different types.
-
-Class becomes increasingly complex and harder to maintain as categories grow.
-
-Mixed concerns: demonstration logic intertwined with category-specific handling.
-
-Exponential Code Growth
-
-Adding each new unit type requires:
-
-New Unit enum (e.g., VolumeUnit)
-
-New Quantity class (e.g., QuantityVolume)
-
-New demonstration methods in QuantityMeasurementApp (minimum 3 methods)
-
-New comprehensive test suite
-
-Total codebase grows exponentially; maintenance burden escalates rapidly.
-
-Pattern becomes unsustainable beyond 3-4 categories.
-
-Inconsistency Risk
-
-Refactoring comparison logic in QuantityLength without updating QuantityWeight creates subtle bugs.
-
-Different categories may inadvertently have different precision, rounding, or validation logic.
-
-No single source of truth for core operations.
-
-Limited API Flexibility
-
-Methods accepting Quantity<?> or generic comparisons are difficult to implement.
-
-Factory methods or utility functions cannot work uniformly across categories.
-
-The system becomes increasingly fragmented.
 
 **Preconditions**
 
 
-All functionality from UC1–UC9 is fully operational and tested.
+The refactored Quantity<U extends IMeasurable> class from UC10 is fully operational.
 
-An IMeasurable interface is defined to standardize unit behavior across all categories.
+The IMeasurable interface is defined with methods for unit conversions.
 
-Both LengthUnit and WeightUnit enums are refactored to implement IMeasurable.
+Both LengthUnit and WeightUnit enums implement IMeasurable and are fully functional.
 
-A generic Quantity<U extends IMeasurable> class is created to replace category-specific Quantity classes.
+All functionality from UC1–UC10 is preserved and unaffected by UC11 additions.
 
-Type safety is maintained through generics; compile-time checking prevents category mismatches.
+A new VolumeUnit enum will be created implementing IMeasurable with LITRE as the base unit.
 
-All existing test cases from UC1–UC9 continue to pass without modification.
+Conversion factors for all volume units are defined relative to litres (base unit).
 
-The refactored design serves as a template for future measurement categories.
+Volume measurements are treated as a separate, non-interoperable category from length and weight.
+
+No modifications to existing Quantity<U>, IMeasurable, or QuantityMeasurementApp are required.
 
 
 **Main Flow**
 
 
-Define IMeasurable Interface
+Create VolumeUnit Enum Implementing IMeasurable
 
-Create interface with methods required for unit conversions:
+Define an enum with volume units (LITRE, MILLILITRE, GALLON).
 
-double getConversionFactor() - returns conversion factor relative to base unit
+Assign conversion factors relative to the base unit (litre):
 
-double convertToBaseUnit(double value) - converts value to base unit
+LITRE: 1.0 (base unit)
 
-double convertFromBaseUnit(double baseValue) - converts from base unit to this unit
+MILLILITRE: 0.001 (1 mL = 0.001 L)
 
-String getUnitName() - returns readable unit name
+GALLON: 3.78541 (1 gallon ≈ 3.78541 L)
 
-Refactor LengthUnit Enum:
+Implement all IMeasurable interface methods:
 
-Implement IMeasurable interface
+getConversionFactor() - returns the conversion factor
 
-Keep all existing constants (FEET, INCHES, YARDS, CENTIMETERS) and conversion factors
+convertToBaseUnit(double value) - converts value to litres
 
-Implement all interface methods with existing logic
+convertFromBaseUnit(double baseValue) - converts from litres to this unit
 
-No external API changes; fully backward compatible.
+getUnitName() - returns readable unit name
 
-Refactor WeightUnit Enum:
+Equality Comparison
 
-Implement IMeasurable interface
+User inputs two numerical values with their respective volume unit types.
 
-Ensure same structure and method implementations as refactored LengthUnit
+Quantity<VolumeUnit> class (inherited from generic Quantity<U>) validates input values.
 
-Consistency across enums improves maintainability
+Both values are converted to the common base unit (litre) using VolumeUnit conversion methods.
 
-Create Generic Quantity Class:
+The converted values are compared for equality using the generic equals() method.
 
-Replaces both QuantityLength and QuantityWeight
+The result of the comparison (true or false) is returned.
 
-Holds private final fields: double value and U unit
+Unit Conversion
 
-Constructor validates that unit is non-null and value is finite
+User inputs a numerical value, source unit, and target unit (all volume units).
 
-Implements equals() method:
+Quantity<VolumeUnit>.convertTo(targetUnit) converts the measurement to the target unit.
 
-Checks object identity and null
+The method normalizes through the base unit (litre) and applies appropriate conversion factors.
 
-Verifies unit types match (prevents cross-category comparison)
+A new Quantity<VolumeUnit> object is returned with the converted value and target unit.
 
-Converts both to base unit and compares using Double.compare()
+Addition Operations
 
-Implements convertTo(U targetUnit) method:
+User inputs two Quantity<VolumeUnit> objects and optionally a target unit.
 
-Delegates to unit's conversion methods
+Both measurements are converted to the base unit (litre) using the generic add() method.
 
-Returns new Quantity<U> instance (immutability)
+The converted values are summed.
 
-Rounds result to two decimal places
+The result is converted to the target unit (either first operand's unit or explicitly specified unit).
 
-Implements add() methods (overloaded):
-
-Add (Quantity<U> other) - result in first operand's unit
-
-Add (Quantity<U> other, U targetUnit) - result in specified unit
-
-Overrides hashCode() for collection support
-
-Overrides toString() for readable output
-
-Simplify QuantityMeasurementApp
-
-Remove all category-specific demonstration methods
-
-Create single generic demonstration methods accepting Quantity<?>
-
-Consolidate comparison, conversion, and addition demonstration logic
-
-Reduce class to orchestration and testing responsibilities only
-
-Eliminate method duplication
+A new Quantity<VolumeUnit> object representing the sum is returned.
 
 Cross-Category Type Safety
 
-equals() method checks this.unit.getClass() != that.unit.getClass()
+Attempting to compare volume with length or weight returns false (different categories).
 
-Prevents invalid comparisons (e.g., 1 foot ≠ 1 kilogram)
+Compiler prevents mixing Quantity<VolumeUnit> with Quantity<LengthUnit> or Quantity<WeightUnit>.
 
-Compiler enforces type constraints through generics
+Runtime type checking in equals() method ensures category isolation.
 
-Runtime checks provide additional safety layer
+Integration with Existing System
 
-Backward Compatibility
+VolumeUnit enum is used seamlessly with the existing generic Quantity<U> class.
 
-Type aliases or factory methods can maintain familiar APIs if needed
+No modifications to QuantityMeasurementApp needed; existing generic methods handle volume quantities.
 
-Existing test cases pass without modification
-
-Generic implementation is transparent to callers
-
-Scalability Pattern Establishment
-
-Document process for adding new categories:
-
-Create new enum implementing IMeasurable
-
-Reuse Quantity<U> class with new enum
-
-No new Quantity classes or demonstration methods needed
-
-Pattern proven with length and weight categories
+All existing demonstration and test methods work with volume units automatically.
 
 
 **Postconditions**
 
 
-A single, type-safe Quantity<U extends IMeasurable> class replaces multiple category-specific Quantity classes.
+Volume measurements of the same unit and value are considered equal.
 
-All unit enums implement IMeasurable interface, eliminating structural duplication.
+Volume measurements of different units but equivalent values are considered equal (e.g., 1 L = 1000 mL = ~0.264172 gallons).
 
-QuantityMeasurementApp is simplified with significantly fewer methods and reduced complexity.
+Unit conversions between volume units produce mathematically accurate results within floating-point precision.
 
-DRY principle is upheld; logic is implemented once and reused across all categories.
+Addition of two volume measurements produces a new Quantity<VolumeUnit> object without modifying originals (immutability).
 
-Single Responsibility Principle is restored; each class has a clear, singular purpose.
+All previous functionality from UC1–UC10 for length and weight measurements is preserved and works correctly.
 
-All functionality from UC1–UC9 is preserved; behavior is identical.
+Volume, length, and weight measurements are treated as separate, non-interoperable categories.
 
-Adding new measurement categories requires only:
+No modifications to Quantity<U>, IMeasurable, QuantityMeasurementApp, or existing test infrastructure are required.
 
-New enum implementing IMeasurable interface
+The architectural pattern is validated as truly scalable; new categories integrate effortlessly.
 
-No changes to Quantity<U>, test infrastructure, or QuantityMeasurementApp
-
-Maintenance burden is significantly reduced; changes are localized.
-
-Code complexity scales linearly rather than exponentially.
-
-Type safety is enhanced through generics and bounded type parameters.
+Adding additional measurement categories (temperature, time, etc.) follows the identical pattern.
